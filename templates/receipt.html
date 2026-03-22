@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head><title>Receipt - Payment #{{ payment.id }}</title></head>
+<body>
+    <div class="grid">
+        <div class="col-half">
+            <div class="business-name">{{ business.name }}</div>
+            <div>{{ business.address }}, {{ business.city }} - {{ business.pin }}</div>
+            <div>Phone: {{ business.phone }} | Email: {{ business.email }}</div>
+        </div>
+        <div class="col-half text-right">
+            <div class="doc-title">PAYMENT RECEIPT</div>
+            <div><strong>#RCPT-{{ payment.id }}</strong></div>
+            <div>Date: {{ payment.payment_date }}</div>
+        </div>
+    </div>
+
+    <div class="header"></div>
+
+    <div style="margin: 40px 0; font-size: 13pt; line-height: 1.8;">
+        <p>Received with thanks from <strong>{{ client.name }}</strong></p>
+        <p>the sum of <strong>₹{{ "%.2f"|format(payment.amount|float) }}</strong></p>
+        <p>by <strong>{{ payment.mode|title }}</strong> {% if payment.reference %}(Ref: {{ payment.reference }}){% endif %}</p>
+        <p>as payment towards Invoice <strong>#{{ invoice.invoice_number }}</strong>.</p>
+    </div>
+
+    {% if payment.notes %}
+    <div class="notes-box">
+        <strong>Notes:</strong> {{ payment.notes }}
+    </div>
+    {% endif %}
+
+    <div class="grid" style="margin-top: 80px;">
+        <div class="col-half"></div>
+        <div class="col-half text-right">
+            <div style="border-top: 1px solid #333; display: inline-block; padding-top: 5px; margin-top: 50px; width: 200px; text-align: center;">
+                Authorized Signature
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Thank you for your prompt payment!
+    </div>
+</body>
+</html>

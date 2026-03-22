@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head><title>Quotation {{ quotation.quotation_number }}</title></head>
+<body>
+    <div class="grid">
+        <div class="col-half">
+            <div class="business-name">{{ business.name }}</div>
+            <div>{{ business.address }}, {{ business.city }} - {{ business.pin }}</div>
+            <div>Phone: {{ business.phone }} | Email: {{ business.email }}</div>
+            {% if business.gstin %}<div>GSTIN: {{ business.gstin }}</div>{% endif %}
+        </div>
+        <div class="col-half text-right">
+            <div class="doc-title">QUOTATION</div>
+            <div><strong>#{{ quotation.quotation_number }}</strong></div>
+            <div>Date: {{ quotation.issue_date }}</div>
+            <div>Valid Until: {{ quotation.valid_until }}</div>
+        </div>
+    </div>
+
+    <div class="header"></div>
+
+    <div class="grid">
+        <div class="col-half">
+            <h3>Prepared For:</h3>
+            <div><strong>{{ client.name }}</strong></div>
+            <div>{{ client.address }}</div>
+            <div>Phone: {{ client.phone }}</div>
+            {% if client.gstin %}<div>GSTIN: {{ client.gstin }}</div>{% endif %}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Rate</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in quotation['items'] %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td class="text-right">{{ item.quantity }}</td>
+                <td class="text-right">₹{{ "%.2f"|format(item.unit_price|float) }}</td>
+                <td class="text-right">₹{{ "%.2f"|format(item.amount|float) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="grid">
+        <div class="col-half">
+            {% if quotation.notes %}
+            <div class="notes-box">
+                <strong>Notes:</strong><br/>
+                {{ quotation.notes }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-half totals">
+            <table>
+                <tr>
+                    <td>Subtotal</td>
+                    <td class="text-right">₹{{ "%.2f"|format(quotation.subtotal|float) }}</td>
+                </tr>
+                {% if quotation.tax_rate > 0 %}
+                <tr>
+                    <td>GST ({{ quotation.tax_rate }}%)</td>
+                    <td class="text-right">₹{{ "%.2f"|format(quotation.tax_amount|float) }}</td>
+                </tr>
+                {% endif %}
+                <tr class="grand-total">
+                    <td>Grand Total</td>
+                    <td class="text-right">₹{{ "%.2f"|format(quotation.total|float) }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    {% if quotation.status == 'accepted' %}
+    <div class="watermark">ACCEPTED</div>
+    {% elif quotation.status == 'rejected' %}
+    <div class="watermark" style="color: rgba(231, 76, 60, 0.2);">REJECTED</div>
+    {% endif %}
+
+    <div class="footer">
+        This is a quotation, not an invoice. Please let us know if you approve these terms.
+    </div>
+</body>
+</html>

@@ -1,23 +1,24 @@
 [project]
-name = "nanobot-ai"
-version = "0.1.4.post5"
-description = "A lightweight personal AI assistant framework"
+name = "hermes"
+version = "1.0.0"
+description = "AI financial assistant for Indian small businesses — invoicing, payments, expenses, bookkeeping via Telegram"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "nanobot contributors"}
+    {name = "Nikhil Kadian"}
 ]
-keywords = ["ai", "agent", "chatbot"]
+keywords = ["ai", "agent", "finance", "invoicing", "bookkeeping", "india", "telegram"]
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
 
 dependencies = [
+    # --- nanobot core (frozen, do not remove) ---
     "typer>=0.20.0,<1.0.0",
     "litellm>=1.82.1,<2.0.0",
     "pydantic>=2.12.0,<3.0.0",
@@ -48,6 +49,21 @@ dependencies = [
     "chardet>=3.0.2,<6.0.0",
     "openai>=2.8.0",
     "tiktoken>=0.12.0,<1.0.0",
+
+    # --- HERMES-specific ---
+    "weasyprint>=62.0",
+    "jinja2>=3.1.0",
+    "Pillow>=10.0.0",
+
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.9",
+    "python-dotenv>=1.0.0",
+    "python-dateutil>=2.9.0",
+    "babel>=2.16.0",
+    "aiofiles>=24.0.0",
 ]
 
 [project.optional-dependencies]
@@ -62,13 +78,13 @@ matrix = [
 langsmith = [
     "langsmith>=0.1.0",
 ]
+whisper = [
+    "openai-whisper>=20240930",
+]
 dev = [
     "pytest>=9.0.0,<10.0.0",
     "pytest-asyncio>=1.3.0,<2.0.0",
     "ruff>=0.1.0",
-    "matrix-nio[e2e]>=0.25.2",
-    "mistune>=3.0.0,<4.0.0",
-    "nh3>=0.2.17,<1.0.0",
 ]
 
 [project.scripts]
@@ -87,13 +103,16 @@ include = [
     "nanobot/templates/**/*.md",
     "nanobot/skills/**/*.md",
     "nanobot/skills/**/*.sh",
+    "hermes/**/*.py",
+    "hermes/**/*.sql",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["nanobot"]
+packages = ["nanobot", "hermes"]
 
 [tool.hatch.build.targets.wheel.sources]
 "nanobot" = "nanobot"
+"hermes" = "hermes"
 
 [tool.hatch.build.targets.wheel.force-include]
 "bridge" = "nanobot/bridge"
@@ -101,6 +120,7 @@ packages = ["nanobot"]
 [tool.hatch.build.targets.sdist]
 include = [
     "nanobot/",
+    "hermes/",
     "bridge/",
     "README.md",
     "LICENSE",

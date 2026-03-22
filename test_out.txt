@@ -1,0 +1,203 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- D:\HERMES\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\HERMES
+configfile: pyproject.toml
+plugins: anyio-4.12.1, asyncio-1.3.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 4 items
+
+tests/test_pdf.py::test_generate_invoice FAILED                          [ 25%]
+tests/test_pdf.py::test_generate_receipt PASSED                          [ 50%]
+tests/test_pdf.py::test_generate_quotation FAILED                        [ 75%]
+tests/test_pdf.py::test_generate_reports FAILED                          [100%]
+
+================================== FAILURES ===================================
+____________________________ test_generate_invoice ____________________________
+
+    def test_generate_invoice():
+        with TemporaryDirectory() as tmpdir:
+            out = Path(tmpdir) / "inv.pdf"
+>           assert pdf.generate_invoice_pdf(INVOICE, BUSINESS, str(out)) == str(out)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_pdf.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+hermes\pdf.py:78: in generate_invoice_pdf
+    return _render_pdf("invoice.html", context, output_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes\pdf.py:45: in _render_pdf
+    html_content = template.render(**context)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\jinja2\environment.py:1295: in render
+    self.environment.handle_exception()
+.venv\Lib\site-packages\jinja2\environment.py:942: in handle_exception
+    raise rewrite_traceback_stack(source=source)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    <!DOCTYPE html>
+    <html>
+    <head><title>Invoice {{ invoice.invoice_number }}</title></head>
+    <body>
+        <div class="grid">
+            <div class="col-half">
+                <div class="business-name">{{ business.name }}</div>
+                <div>{{ business.address }}, {{ business.city }} - {{ business.pin }}</div>
+                <div>Phone: {{ business.phone }} | Email: {{ business.email }}</div>
+                {% if business.gstin %}<div>GSTIN: {{ business.gstin }}</div>{% endif %}
+            </div>
+            <div class="col-half text-right">
+                <div class="doc-title">INVOICE</div>
+                <div><strong>#{{ invoice.invoice_number }}</strong></div>
+                <div>Date: {{ invoice.issue_date }}</div>
+                <div>Due: {{ invoice.due_date }}</div>
+            </div>
+        </div>
+    
+        <div class="header"></div>
+    
+        <div class="grid">
+            <div class="col-half">
+                <h3>Bill To:</h3>
+                <div><strong>{{ client.name }}</strong></div>
+                <div>{{ client.address }}</div>
+                <div>Phone: {{ client.phone }}</div>
+                {% if client.gstin %}<div>GSTIN: {{ client.gstin }}</div>{% endif %}
+            </div>
+        </div>
+    
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Rate</th>
+                    <th class="text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+>               {% for item in invoice.items %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: 'builtin_function_or_method' object is not iterable
+
+templates\invoice.html:42: TypeError
+___________________________ test_generate_quotation ___________________________
+
+    def test_generate_quotation():
+        with TemporaryDirectory() as tmpdir:
+            out = Path(tmpdir) / "qt.pdf"
+>           assert pdf.generate_quotation_pdf(QUOTATION, BUSINESS, str(out)) == str(out)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_pdf.py:81: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+hermes\pdf.py:88: in generate_quotation_pdf
+    return _render_pdf("quotation.html", context, output_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes\pdf.py:45: in _render_pdf
+    html_content = template.render(**context)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\jinja2\environment.py:1295: in render
+    self.environment.handle_exception()
+.venv\Lib\site-packages\jinja2\environment.py:942: in handle_exception
+    raise rewrite_traceback_stack(source=source)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    <!DOCTYPE html>
+    <html>
+    <head><title>Quotation {{ quotation.quotation_number }}</title></head>
+    <body>
+        <div class="grid">
+            <div class="col-half">
+                <div class="business-name">{{ business.name }}</div>
+                <div>{{ business.address }}, {{ business.city }} - {{ business.pin }}</div>
+                <div>Phone: {{ business.phone }} | Email: {{ business.email }}</div>
+                {% if business.gstin %}<div>GSTIN: {{ business.gstin }}</div>{% endif %}
+            </div>
+            <div class="col-half text-right">
+                <div class="doc-title">QUOTATION</div>
+                <div><strong>#{{ quotation.quotation_number }}</strong></div>
+                <div>Date: {{ quotation.issue_date }}</div>
+                <div>Valid Until: {{ quotation.valid_until }}</div>
+            </div>
+        </div>
+    
+        <div class="header"></div>
+    
+        <div class="grid">
+            <div class="col-half">
+                <h3>Prepared For:</h3>
+                <div><strong>{{ client.name }}</strong></div>
+                <div>{{ client.address }}</div>
+                <div>Phone: {{ client.phone }}</div>
+                {% if client.gstin %}<div>GSTIN: {{ client.gstin }}</div>{% endif %}
+            </div>
+        </div>
+    
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Rate</th>
+                    <th class="text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+>               {% for item in quotation.items %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: 'builtin_function_or_method' object is not iterable
+
+templates\quotation.html:42: TypeError
+____________________________ test_generate_reports ____________________________
+
+    def test_generate_reports():
+        with TemporaryDirectory() as tmpdir:
+            p = Path(tmpdir)
+            pdf.generate_pl_report_pdf(PL_DATA, BUSINESS, "2023-10-01", "2023-10-31", str(p / "pl.pdf"))
+>           pdf.generate_outstanding_report_pdf(OUTSTANDING_DATA, BUSINESS, str(p / "out.pdf"))
+
+tests\test_pdf.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+hermes\pdf.py:99: in generate_outstanding_report_pdf
+    return _render_pdf("report_outstanding.html", context, output_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hermes\pdf.py:44: in _render_pdf
+    template = _JINJA_ENV.get_template(template_name)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\jinja2\environment.py:1016: in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\jinja2\environment.py:975: in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\jinja2\loaders.py:138: in load
+    code = environment.compile(source, name, filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\jinja2\environment.py:771: in compile
+    self.handle_exception(source=source_hint)
+.venv\Lib\site-packages\jinja2\environment.py:942: in handle_exception
+    raise rewrite_traceback_stack(source=source)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    <!DOCTYPE html>
+    <html>
+    <head><title>Outstanding Report</title></head>
+    <body>
+        <div class="grid">
+            <div class="col-half">
+                <div class="business-name">{{ business.name }}</div>
+                <div>{{ business.address }}, {{ business.city }} - {{ business.pin }}</div>
+            </div>
+            <div class="col-half text-right">
+                <div class="doc-title">OUTSTANDING INVOICES</div>
+>               <div>Date Generated: {{ None|datetimeformat|default('Today', true) }}</div>
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+E               jinja2.exceptions.TemplateAssertionError: No filter named 'datetimeformat'.
+
+templates\report_outstanding.html:12: TemplateAssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_pdf.py::test_generate_invoice - TypeError: 'builtin_functio...
+FAILED tests/test_pdf.py::test_generate_quotation - TypeError: 'builtin_funct...
+FAILED tests/test_pdf.py::test_generate_reports - jinja2.exceptions.TemplateA...
+========================= 3 failed, 1 passed in 3.13s =========================

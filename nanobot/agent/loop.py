@@ -138,6 +138,16 @@ class AgentLoop:
         self.tools.register(SpawnTool(manager=self.subagents))
         if self.cron_service:
             self.tools.register(CronTool(self.cron_service))
+        
+        # Register all HERMES native tools
+        import nanobot.agent.tools.hermes_tools as ht
+        import nanobot.agent.tools.hermes_extra_tools as het
+        import inspect
+        
+        for module in (ht, het):
+            for name, obj in inspect.getmembers(module, inspect.isclass):
+                if issubclass(obj, ht.Tool) and obj is not ht.Tool:
+                    self.tools.register(obj(workspace=self.workspace))
 
     async def _connect_mcp(self) -> None:
         """Connect to configured MCP servers (one-time, lazy)."""

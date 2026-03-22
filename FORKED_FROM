@@ -1,0 +1,10 @@
+HERMES — Fork Origin Record
+============================
+
+Upstream Repository : https://github.com/HKUDS/nanobot
+Upstream Version    : 0.1.4.post5  (nanobot-ai)
+Upstream Commit     : 5fd66cae5c82b5d19de03f9d5bf6d30bb444f19e1
+Fork Date           : 2026-03-22
+
+IMPORTANT: This fork is FROZEN. Never pull from upstream again.
+All future development happens exclusively in this repo.

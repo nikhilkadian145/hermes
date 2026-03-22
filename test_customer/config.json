@@ -1,0 +1,22 @@
+{
+  "providers": {
+    "openrouter": {
+      "api_key": "sk-or-v1-dummy",
+      "model": "claude-3-haiku"
+    }
+  },
+  "agents": {
+    "defaults": {
+      "workspace": "workspace",
+      "maxToolIterations": 20
+    }
+  },
+  "channels": {
+    "telegram": {
+      "token": "dummy_bot_token",
+      "allowFrom": [
+        123456789
+      ]
+    }
+  }
+}

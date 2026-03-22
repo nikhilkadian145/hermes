@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head><title>Invoice {{ invoice.invoice_number }}</title></head>
+<body>
+    <div class="grid">
+        <div class="col-half">
+            <div class="business-name">{{ business.name }}</div>
+            <div>{{ business.address }}, {{ business.city }} - {{ business.pin }}</div>
+            <div>Phone: {{ business.phone }} | Email: {{ business.email }}</div>
+            {% if business.gstin %}<div>GSTIN: {{ business.gstin }}</div>{% endif %}
+        </div>
+        <div class="col-half text-right">
+            <div class="doc-title">INVOICE</div>
+            <div><strong>#{{ invoice.invoice_number }}</strong></div>
+            <div>Date: {{ invoice.issue_date }}</div>
+            <div>Due: {{ invoice.due_date }}</div>
+        </div>
+    </div>
+
+    <div class="header"></div>
+
+    <div class="grid">
+        <div class="col-half">
+            <h3>Bill To:</h3>
+            <div><strong>{{ client.name }}</strong></div>
+            <div>{{ client.address }}</div>
+            <div>Phone: {{ client.phone }}</div>
+            {% if client.gstin %}<div>GSTIN: {{ client.gstin }}</div>{% endif %}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Rate</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice['items'] %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td class="text-right">{{ item.quantity }}</td>
+                <td class="text-right">₹{{ "%.2f"|format(item.unit_price|float) }}</td>
+                <td class="text-right">₹{{ "%.2f"|format(item.amount|float) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="grid">
+        <div class="col-half">
+            {% if business.bank_name and business.account_number %}
+            <div class="notes-box">
+                <h4>Payment Details</h4>
+                <div>Bank: {{ business.bank_name }}</div>
+                <div>A/C: {{ business.account_number }}</div>
+                <div>IFSC: {{ business.ifsc }}</div>
+                {% if business.upi_id %}<div>UPI: {{ business.upi_id }}</div>{% endif %}
+            </div>
+            {% endif %}
+            
+            {% if invoice.notes %}
+            <div style="margin-top: 15px;"><strong>Notes:</strong> {{ invoice.notes }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="col-half totals">
+            <table>
+                <tr>
+                    <td>Subtotal</td>
+                    <td class="text-right">₹{{ "%.2f"|format(invoice.subtotal|float) }}</td>
+                </tr>
+                {% if invoice.tax_rate > 0 %}
+                <tr>
+                    <td>GST ({{ invoice.tax_rate }}%)</td>
+                    <td class="text-right">₹{{ "%.2f"|format(invoice.tax_amount|float) }}</td>
+                </tr>
+                {% endif %}
+                <tr class="grand-total">
+                    <td>Grand Total</td>
+                    <td class="text-right">₹{{ "%.2f"|format(invoice.total|float) }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    {% if invoice.status == 'paid' %}
+    <div class="watermark">PAID</div>
+    {% endif %}
+
+    <div class="footer">
+        Thank you for your business!
+    </div>
+</body>
+</html>
