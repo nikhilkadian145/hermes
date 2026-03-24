@@ -10,6 +10,33 @@ import jinja2
 _TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 _JINJA_ENV = jinja2.Environment(loader=jinja2.FileSystemLoader(_TEMPLATES_DIR))
 
+
+def _indian_number(value: float | int) -> str:
+    """Format a number Indian style: 1,23,456.78"""
+    try:
+        n = float(value)
+    except (ValueError, TypeError):
+        return str(value)
+    is_neg = n < 0
+    n = abs(n)
+    whole = int(n)
+    frac = round(n - whole, 2)
+    s = str(whole)
+    if len(s) > 3:
+        last3 = s[-3:]
+        rest = s[:-3]
+        groups = []
+        while rest:
+            groups.append(rest[-2:])
+            rest = rest[:-2]
+        groups.reverse()
+        s = ','.join(groups) + ',' + last3
+    result = s + (f'.{int(frac * 100):02d}' if frac else '')
+    return ('-' + result) if is_neg else result
+
+
+_JINJA_ENV.filters['indian'] = _indian_number
+
 # Common CSS shared across all templates for a neat, professional look.
 _BASE_CSS_STRING = '''
     @page { size: A4; margin: 2cm; }
@@ -32,6 +59,7 @@ _BASE_CSS_STRING = '''
     .col-half { width: 48%; display: inline-block; vertical-align: top;}
     .watermark { position: absolute; top: 40%; left: 30%; font-size: 80pt; color: rgba(46, 204, 113, 0.2); transform: rotate(-45deg); z-index: -1; }
     .notes-box { margin-top: 30px; padding: 10px; background-color: #f8f9fa; border-left: 4px solid #3498db; }
+    .amount-words { margin-top: 8px; font-size: 9pt; font-style: italic; color: #555; }
 '''
 
 import tempfile
@@ -105,6 +133,16 @@ def generate_expense_report_pdf(expense_data: list[dict[str, Any]], totals: dict
     return _render_pdf("report_expenses.html", context, output_path)
 
 
-def generate_gst_report_pdf(gst_data: dict[str, Any], business_dict: dict[str, Any], from_date: str, to_date: str, output_path: str) -> str:
-    context = {"report": gst_data, "business": business_dict, "from_date": from_date, "to_date": to_date}
+def generate_gst_report_pdf(gst_data: dict[str, Any], business_dict: dict[str, Any], from_date: str, to_date: str, output_path: str,
+                            itc_data: dict[str, Any] | None = None, liability_data: dict[str, Any] | None = None) -> str:
+    context = {
+        "report": gst_data, "business": business_dict,
+        "period": {"from": from_date, "to": to_date},
+        "b2b": gst_data.get("b2b", []),
+        "b2c_large": gst_data.get("b2c_large", []),
+        "b2c_small": gst_data.get("b2c_small", []),
+        "hsn_summary": gst_data.get("hsn_summary", []),
+        "totals": gst_data.get("totals", {}),
+        "itc": itc_data, "liability": liability_data,
+    }
     return _render_pdf("report_gst.html", context, output_path)

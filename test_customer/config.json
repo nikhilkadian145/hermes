@@ -1,22 +1,37 @@
 {
   "providers": {
     "openrouter": {
-      "api_key": "sk-or-v1-dummy",
-      "model": "claude-3-haiku"
+      "api_key": "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",
+      "model": "nvidia/nemotron-3-super-120b-a12b"
     }
   },
   "agents": {
     "defaults": {
-      "workspace": "workspace",
+      "workspace": "d:\\HERMES\\workspace",
       "maxToolIterations": 20
     }
   },
   "channels": {
     "telegram": {
-      "token": "dummy_bot_token",
-      "allowFrom": [
-        123456789
-      ]
-    }
+      "token": "8581032771:AAFU9DzuAFHLVdk1DxcFwpSdD87Pajdb5a8",
+      "allowFrom": ["*"]
+    },
+    "cron": [
+      {
+        "name": "morning-briefing",
+        "cron": "0 8 * * *",
+        "message": "Run morning briefing now"
+      },
+      {
+        "name": "anomaly-detection",
+        "cron": "0 3 * * *",
+        "message": "Run anomaly detection scan now"
+      },
+      {
+        "name": "overdue-check",
+        "cron": "30 7 * * *",
+        "message": "Run overdue invoice check now"
+      }
+    ]
   }
 }

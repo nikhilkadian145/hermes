@@ -1,0 +1,109 @@
+/* ─── LIGHT MODE (default) ─────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg-base:     #F7F6F3;   /* Page background — warm off-white */
+  --bg-surface:  #FFFFFF;   /* Cards, panels, modals, dropdowns */
+  --bg-subtle:   #EFEFEB;   /* Table alternating rows, input backgrounds */
+  --bg-overlay:  #E8E7E2;   /* Hover states, secondary inputs */
+
+  /* Borders */
+  --border:        #DDD9D1; /* All borders and dividers */
+  --border-strong: #B8B3A8; /* Focused inputs, active/hover borders */
+
+  /* Text */
+  --text-primary:   #1A1917; /* Headings, body text, primary labels */
+  --text-secondary: #5C5852; /* Subheadings, metadata, descriptions */
+  --text-muted:     #9C9890; /* Placeholder text, disabled labels, captions */
+  --text-inverse:   #FFFFFF; /* Text on dark/colored backgrounds */
+
+  /* Accent (primary interactive color) */
+  --accent:        #1A56DB;
+  --accent-hover:  #1544B8;
+  --accent-subtle: #EBF0FD; /* Accent-tinted backgrounds for badges, highlights */
+
+  /* Semantic: Success */
+  --success:    #0D7E54;
+  --success-bg: #E9F6F0;
+
+  /* Semantic: Warning */
+  --warning:    #B45309;
+  --warning-bg: #FEF3C7;
+
+  /* Semantic: Danger */
+  --danger:     #C81E1E;
+  --danger-bg:  #FEE2E2;
+
+  /* Semantic: Neutral */
+  --neutral:    #6B7280;
+  --neutral-bg: #F3F4F6;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
+
+  /* Typography */
+  --font-sans: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  /* Spacing (base unit: 4px) */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 60px;
+  --topbar-height: 56px;
+  --bottom-bar-height: 64px;
+  --content-max-width: 1280px;
+}
+
+/* ─── DARK MODE ────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-base:     #0F0F0E;
+  --bg-surface:  #1A1917;
+  --bg-subtle:   #242320;
+  --bg-overlay:  #2C2B28;
+
+  --border:        #333230;
+  --border-strong: #55524D;
+
+  --text-primary:   #F5F4F1;
+  --text-secondary: #A8A49D;
+  --text-muted:     #6B6760;
+  --text-inverse:   #0F0F0E;
+
+  --accent:        #4B7FE8;
+  --accent-hover:  #3A6ED4;
+  --accent-subtle: #1A2D4F;
+
+  --success:    #34C987;
+  --success-bg: #0D2E20;
+
+  --warning:    #FBBF24;
+  --warning-bg: #2D2000;
+
+  --danger:     #F87171;
+  --danger-bg:  #2D0A0A;
+
+  --neutral:    #9CA3AF;
+  --neutral-bg: #1F2937;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.30);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.40);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.55);
+}

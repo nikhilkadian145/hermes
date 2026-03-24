@@ -90,3 +90,14 @@ When user manually requests it (not wakeup):
 - Bullet-heavy for scannability (this is meant to be read in 30 seconds)
 - Numbers always formatted: ₹1,23,456 (Indian comma system)
 - Emojis used sparingly for section headers only — not excessive
+
+### Anomaly Section (add only if unreviewed anomalies exist)
+
+Call `get_unreviewed_anomaly_count` tool (add this — it reads from the anomalies table).
+If count > 0:
+Add to briefing:
+
+🚨 ANOMALIES ({count} unreviewed)
+→ {top anomaly title}
+→ {second anomaly title if exists}
+→ "Dashboard pe dekhna for details"

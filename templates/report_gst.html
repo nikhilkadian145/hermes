@@ -1,71 +1,177 @@
 <!DOCTYPE html>
 <html>
-<head><title>GST Report</title></head>
+<head><title>GST Report — {{ period.from }} to {{ period.to }}</title></head>
 <body>
     <div class="grid">
         <div class="col-half">
             <div class="business-name">{{ business.name }}</div>
-            <div>{{ business.address }}, {{ business.city }} - {{ business.pin }}</div>
-            <div><strong>GSTIN: {{ business.gstin }}</strong></div>
+            <div>GSTIN: {{ business.gstin }}</div>
+            {% if business.state_name %}<div>State: {{ business.state_name }} ({{ business.state_code }})</div>{% endif %}
         </div>
         <div class="col-half text-right">
-            <div class="doc-title">GST REPORT (OUTPUT)</div>
-            <div>Period: {{ from_date }} to {{ to_date }}</div>
+            <div class="doc-title">GST REPORT</div>
+            <div>GSTR-1 Summary</div>
+            <div>Period: {{ period.from }} to {{ period.to }}</div>
         </div>
     </div>
 
     <div class="header"></div>
 
-    <div style="margin: 30px 0;">
-        <h2 style="color: #2980b9;">GST Summary</h2>
-        <table style="width: 60%; font-size: 12pt;">
-            <tr>
-                <td>Taxable Turnover</td>
-                <td class="text-right">₹{{ "%.2f"|format(report.taxable_turnover|float) }}</td>
-            </tr>
-            <tr>
-                <td>Total GST Collected</td>
-                <td class="text-right" style="font-weight: bold;">₹{{ "%.2f"|format(report.total_gst|float) }}</td>
-            </tr>
-            <tr style="border-top: 1px dashed #ccc;">
-                <td>CGST (Assumed 50%)</td>
-                <td class="text-right">₹{{ "%.2f"|format(report.cgst|float) }}</td>
-            </tr>
-            <tr>
-                <td>SGST (Assumed 50%)</td>
-                <td class="text-right">₹{{ "%.2f"|format(report.sgst|float) }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <h3 style="margin-top: 40px; color: #2980b9;">Invoice Details</h3>
+    {# ─── B2B Invoices (Registered Buyers) ─── #}
+    <h3>Section 1: B2B Invoices (Registered Buyers)</h3>
+    {% if b2b %}
     <table>
         <thead>
             <tr>
                 <th>Invoice #</th>
                 <th>Date</th>
-                <th class="text-right">Taxable Amount</th>
-                <th class="text-right">GST Rate</th>
-                <th class="text-right">GST Amount</th>
+                <th>Client</th>
+                <th>GSTIN</th>
+                <th class="text-right">Taxable</th>
+                <th class="text-right">CGST</th>
+                <th class="text-right">SGST</th>
+                <th class="text-right">IGST</th>
                 <th class="text-right">Total</th>
             </tr>
         </thead>
         <tbody>
-            {% for inv in report.invoice_details %}
+            {% for inv in b2b %}
             <tr>
                 <td>{{ inv.invoice_number }}</td>
-                <td>{{ inv.issue_date }}</td>
-                <td class="text-right">₹{{ "%.2f"|format(inv.subtotal|float) }}</td>
-                <td class="text-right">{{ inv.tax_rate }}%</td>
-                <td class="text-right">₹{{ "%.2f"|format(inv.tax_amount|float) }}</td>
-                <td class="text-right">₹{{ "%.2f"|format(inv.total|float) }}</td>
+                <td>{{ inv.date }}</td>
+                <td>{{ inv.client_name }}</td>
+                <td>{{ inv.client_gstin }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(inv.taxable_value) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(inv.cgst) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(inv.sgst) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(inv.igst) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(inv.total) }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% else %}
+    <div class="notes-box">No B2B invoices in this period.</div>
+    {% endif %}
+
+    {# ─── B2C Large ─── #}
+    {% if b2c_large %}
+    <h3>Section 2: B2C Large (Unregistered, > ₹2.5L)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Invoice #</th>
+                <th>Date</th>
+                <th>Client</th>
+                <th class="text-right">Taxable</th>
+                <th class="text-right">CGST</th>
+                <th class="text-right">SGST</th>
+                <th class="text-right">IGST</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for inv in b2c_large %}
+            <tr>
+                <td>{{ inv.invoice_number }}</td>
+                <td>{{ inv.date }}</td>
+                <td>{{ inv.client_name }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(inv.taxable_value) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(inv.cgst) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(inv.sgst) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(inv.igst) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(inv.total) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {# ─── B2C Small ─── #}
+    {% if b2c_small %}
+    <h3>Section 3: B2C Small (Aggregated by Rate)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>GST Rate</th>
+                <th class="text-right">Taxable</th>
+                <th class="text-right">CGST</th>
+                <th class="text-right">SGST</th>
+                <th class="text-right">IGST</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in b2c_small %}
+            <tr>
+                <td>{{ row.rate }}%</td>
+                <td class="text-right">₹{{ "%.0f"|format(row.taxable) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(row.cgst) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(row.sgst) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(row.igst) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {# ─── HSN Summary ─── #}
+    {% if hsn_summary %}
+    <h3>Section 4: HSN/SAC-wise Summary</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>HSN/SAC</th>
+                <th class="text-right">Rate</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Taxable</th>
+                <th class="text-right">CGST</th>
+                <th class="text-right">SGST</th>
+                <th class="text-right">IGST</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in hsn_summary %}
+            <tr>
+                <td>{{ row.hsn_code }}</td>
+                <td class="text-right">{{ row.gst_rate }}%</td>
+                <td class="text-right">{{ row.total_qty }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(row.taxable_value) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(row.cgst) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(row.sgst) }}</td>
+                <td class="text-right">₹{{ "%.0f"|format(row.igst) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {# ─── Summary ─── #}
+    <h3>Summary</h3>
+    <div class="grid">
+        <div class="col-half">
+            <div class="notes-box">
+                <h4>Output Tax (Sales)</h4>
+                <div>Total Invoices: {{ totals.total_invoices }}</div>
+                <div>Taxable Value: ₹{{ "%.0f"|format(totals.total_taxable) }}</div>
+                <div>CGST: ₹{{ "%.0f"|format(totals.total_cgst) }}</div>
+                <div>SGST: ₹{{ "%.0f"|format(totals.total_sgst) }}</div>
+                <div>IGST: ₹{{ "%.0f"|format(totals.total_igst) }}</div>
+                <div><strong>Total Output Tax: ₹{{ "%.0f"|format(totals.total_tax) }}</strong></div>
+            </div>
+        </div>
+        {% if itc %}
+        <div class="col-half">
+            <div class="notes-box">
+                <h4>Input Tax Credit (Purchases)</h4>
+                <div>Total ITC: ₹{{ "%.0f"|format(itc.total_itc) }}</div>
+                <div><strong>Net GST Payable: ₹{{ "%.0f"|format(liability.net_payable.total) }}</strong></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 
     <div class="footer">
-        Generated by HERMES Business Assistant
+        Generated by HERMES — This is not a government document.
     </div>
 </body>
 </html>

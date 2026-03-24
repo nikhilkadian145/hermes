@@ -675,13 +675,154 @@ def gateway(
 
     console.print(f"[green]✓[/green] Heartbeat: every {hb_cfg.interval_s}s")
 
+    # Ensure DB is initialized
+    try:
+        import os as os_mod
+        import sys as sys_mod
+        # Add project root to path so we can import hermes.db
+        project_root = os_mod.path.dirname(os_mod.path.dirname(os_mod.dirname(os_mod.abspath(__file__))))
+        if project_root not in sys_mod.path:
+            sys_mod.path.insert(0, project_root)
+        import hermes.db as hermes_db
+        db_path_init = os_mod.environ.get("DB_PATH", "hermes.db")
+        hermes_db.init_db(db_path_init)
+        console.print("[green]✓[/green] DB Schema & HSN Master initialized")
+    except Exception as e:
+        console.print(f"[yellow]Warning: DB init failed (maybe already initialized) - {e}[/yellow]")
+
+    async def web_chat_worker():
+        """Background logger for web dashboard."""
+        import hermes.db as db
+        from loguru import logger
+        import os
+        db_path = os.environ.get("DB_PATH", "hermes.db")
+        while agent._running:
+            try:
+                msg = db.get_pending_web_chat_message(db_path)
+                if msg:
+                    db.mark_web_chat_message_processing(db_path, msg["id"])
+                    resp = await agent.process_direct(
+                        content=msg["content"],
+                        session_key=f"webchat:{msg['conversation_id']}",
+                        channel="webchat",
+                        chat_id=msg['conversation_id'],
+                    )
+                    response = resp.content if resp else ""
+                    db.mark_web_chat_message_done(db_path, msg["id"])
+                    db.write_web_chat_assistant_message(
+                        db_path,
+                        conversation_id=msg["conversation_id"],
+                        content=response,
+                        metadata=None
+                    )
+            except Exception as e:
+                pass
+            await asyncio.sleep(1.5)
+
+    async def nightly_anomaly_worker():
+        """Run anomaly detection at 3 AM daily."""
+        import hermes.db as db_mod
+        from loguru import logger
+        from datetime import datetime
+        import os as os_mod
+        db_path = os_mod.environ.get("DB_PATH", "hermes.db")
+        last_run_date = ""
+        while agent._running:
+            now = datetime.now()
+            today = now.strftime("%Y-%m-%d")
+            if now.hour == 3 and today != last_run_date:
+                try:
+                    count = db_mod.run_anomaly_detection(db_path)
+                    last_run_date = today
+                    logger.info("Nightly anomaly detection: {} new anomalies", count)
+                except Exception as e:
+                    logger.error("Anomaly detection failed: {}", e)
+            await asyncio.sleep(60)
+
+    def upload_queue_worker():
+        \"\"\"
+        Background daemon thread.
+        Polls upload_queue every 5 seconds for queued documents.
+        Processes them through the OCR pipeline.
+        Writes extracted data back to the queue row (status = 'review').
+        \"\"\"
+        import json
+        import threading
+        import time
+        import os
+        import hermes.db as db
+        import hermes.ocr as ocr
+        from loguru import logger
+
+        db_path = os.environ.get("DB_PATH", "hermes.db")
+        openrouter_api_key = os.environ.get("OPENROUTER_API_KEY", "")
+        ocr_model = os.environ.get("OCR_MODEL", "google/gemini-flash-1.5")
+
+        while getattr(agent, "_running", True):
+            try:
+                item = db.get_queued_upload(db_path)
+                if item:
+                    queue_id = item["id"]
+                    db.update_upload_status(db_path, queue_id, "processing")
+
+                    try:
+                        # Run OCR
+                        result = ocr.extract_receipt(
+                            image_path=item["original_path"],
+                            openrouter_api_key=openrouter_api_key,
+                            model=ocr_model
+                        )
+
+                        if result.get("success") is False:
+                            retry_count = db.increment_retry_count(db_path, queue_id)
+                            if retry_count >= 3:
+                                db.update_upload_status(
+                                    db_path, queue_id, "error",
+                                    error_message=result.get("raw_response", "OCR failed after 3 retries")
+                                )
+                            else:
+                                # Back to queued for retry
+                                db.update_upload_status(db_path, queue_id, "queued",
+                                                        error_message=f"Retry {retry_count}/3")
+                        else:
+                            # OCR succeeded
+                            db.update_upload_status(
+                                db_path, queue_id, "review",
+                                ocr_result=json.dumps(result),
+                                ocr_confidence=result.get("confidence", 0.8)
+                            )
+                            # Create notification
+                            db.create_notification(
+                                db_path,
+                                type="upload_review",
+                                title="Bill Ready for Review",
+                                message=f"{item['filename']} processed — please review extracted data.",
+                                link_type="upload_queue",
+                                link_id=queue_id
+                            )
+                    except Exception as ocr_err:
+                        db.update_upload_status(db_path, queue_id, "error", error_message=str(ocr_err))
+            except Exception as e:
+                logger.error(f"upload_queue_worker error: {e}")
+            time.sleep(5)
+
     async def run():
         try:
             await cron.start()
             await heartbeat.start()
+            
+            relay_task = asyncio.create_task(web_chat_worker())
+            anomaly_task = asyncio.create_task(nightly_anomaly_worker())
+            
+            import threading
+            t2 = threading.Thread(target=upload_queue_worker, daemon=True)
+            t2.start()
+            
             await asyncio.gather(
                 agent.run(),
                 channels.start_all(),
+                relay_task,
+                anomaly_task,
             )
         except KeyboardInterrupt:
             console.print("\nShutting down...")

@@ -8,12 +8,15 @@
             <div>{{ business.address }}, {{ business.city }} - {{ business.pin }}</div>
             <div>Phone: {{ business.phone }} | Email: {{ business.email }}</div>
             {% if business.gstin %}<div>GSTIN: {{ business.gstin }}</div>{% endif %}
+            {% if business.state_name %}<div>State: {{ business.state_name }} ({{ business.state_code }})</div>{% endif %}
         </div>
         <div class="col-half text-right">
-            <div class="doc-title">INVOICE</div>
+            <div class="doc-title">TAX INVOICE</div>
             <div><strong>#{{ invoice.invoice_number }}</strong></div>
             <div>Date: {{ invoice.issue_date }}</div>
             <div>Due: {{ invoice.due_date }}</div>
+            {% if invoice.supply_type %}<div>Supply: {{ invoice.supply_type | title }}</div>{% endif %}
+            {% if invoice.reverse_charge %}<div>Reverse Charge: Yes</div>{% endif %}
         </div>
     </div>
 
@@ -26,24 +29,47 @@
             <div>{{ client.address }}</div>
             <div>Phone: {{ client.phone }}</div>
             {% if client.gstin %}<div>GSTIN: {{ client.gstin }}</div>{% endif %}
+            {% if client.state_code %}<div>State Code: {{ client.state_code }}</div>{% endif %}
         </div>
+        {% if invoice.place_of_supply %}
+        <div class="col-half text-right">
+            <h3>Place of Supply:</h3>
+            <div>{{ invoice.place_of_supply }}</div>
+        </div>
+        {% endif %}
     </div>
 
     <table>
         <thead>
             <tr>
                 <th>Description</th>
+                <th class="text-right">HSN/SAC</th>
                 <th class="text-right">Qty</th>
                 <th class="text-right">Rate</th>
-                <th class="text-right">Amount</th>
+                <th class="text-right">Taxable</th>
+                {% if invoice.supply_type == 'interstate' %}
+                <th class="text-right">IGST</th>
+                {% else %}
+                <th class="text-right">CGST</th>
+                <th class="text-right">SGST</th>
+                {% endif %}
+                <th class="text-right">Total</th>
             </tr>
         </thead>
         <tbody>
             {% for item in invoice['items'] %}
             <tr>
                 <td>{{ item.description }}</td>
+                <td class="text-right">{{ item.hsn_code or '-' }}</td>
                 <td class="text-right">{{ item.quantity }}</td>
                 <td class="text-right">₹{{ "%.2f"|format(item.unit_price|float) }}</td>
+                <td class="text-right">₹{{ "%.2f"|format((item.taxable_amount or item.amount)|float) }}</td>
+                {% if invoice.supply_type == 'interstate' %}
+                <td class="text-right">₹{{ "%.2f"|format((item.igst_amount or 0)|float) }}</td>
+                {% else %}
+                <td class="text-right">₹{{ "%.2f"|format((item.cgst_amount or 0)|float) }}</td>
+                <td class="text-right">₹{{ "%.2f"|format((item.sgst_amount or 0)|float) }}</td>
+                {% endif %}
                 <td class="text-right">₹{{ "%.2f"|format(item.amount|float) }}</td>
             </tr>
             {% endfor %}
@@ -70,10 +96,38 @@
         <div class="col-half totals">
             <table>
                 <tr>
-                    <td>Subtotal</td>
-                    <td class="text-right">₹{{ "%.2f"|format(invoice.subtotal|float) }}</td>
+                    <td>Taxable Amount</td>
+                    <td class="text-right">₹{{ "%.2f"|format((invoice.total_taxable_amount or invoice.subtotal)|float) }}</td>
                 </tr>
-                {% if invoice.tax_rate > 0 %}
+                {% if invoice.supply_type == 'interstate' %}
+                {% if invoice.total_igst %}
+                <tr>
+                    <td>IGST</td>
+                    <td class="text-right">₹{{ "%.2f"|format(invoice.total_igst|float) }}</td>
+                </tr>
+                {% endif %}
+                {% else %}
+                {% if invoice.total_cgst %}
+                <tr>
+                    <td>CGST</td>
+                    <td class="text-right">₹{{ "%.2f"|format(invoice.total_cgst|float) }}</td>
+                </tr>
+                {% endif %}
+                {% if invoice.total_sgst %}
+                <tr>
+                    <td>SGST</td>
+                    <td class="text-right">₹{{ "%.2f"|format(invoice.total_sgst|float) }}</td>
+                </tr>
+                {% endif %}
+                {% endif %}
+                {% if invoice.total_cess %}
+                <tr>
+                    <td>Cess</td>
+                    <td class="text-right">₹{{ "%.2f"|format(invoice.total_cess|float) }}</td>
+                </tr>
+                {% endif %}
+                {# Backward compat: old-style tax_rate/tax_amount #}
+                {% if not invoice.total_cgst and not invoice.total_igst and invoice.tax_rate > 0 %}
                 <tr>
                     <td>GST ({{ invoice.tax_rate }}%)</td>
                     <td class="text-right">₹{{ "%.2f"|format(invoice.tax_amount|float) }}</td>
@@ -84,6 +138,9 @@
                     <td class="text-right">₹{{ "%.2f"|format(invoice.total|float) }}</td>
                 </tr>
             </table>
+            {% if invoice.total_in_words %}
+            <div class="amount-words">{{ invoice.total_in_words }}</div>
+            {% endif %}
         </div>
     </div>
 
